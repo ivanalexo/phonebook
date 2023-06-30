@@ -50,10 +50,6 @@ const generateId = (length = 6) => {
 const checkIfNameAlreadyExists = (name) =>
   persons.find((person) => person.name === name);
 
-app.get("/", (request, response) => {
-  response.send("<h1>Phonebook</h1>");
-});
-
 app.get("/api/persons", (request, response) => {
   response.json(persons);
 });
