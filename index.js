@@ -1,10 +1,12 @@
 const express = require("express");
+const cors = require('cors');
 const morgan = require('morgan');
 const Person = require('./models/phonebook');
 
 const app = express();
 
 app.use(express.json());
+app.use(cors())
 app.use(express.static('build'))
 
 morgan.token('body', function(req, res) {
