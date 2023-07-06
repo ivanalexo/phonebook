@@ -5,6 +5,7 @@ const Person = require('./models/phonebook');
 const app = express();
 
 app.use(express.json());
+app.use(express.static('build'))
 
 morgan.token('body', function(req, res) {
   return req.method === 'POST' ? JSON.stringify(req.body) : ''
@@ -47,10 +48,6 @@ const generateId = (length = 6) => {
 
 const checkIfNameAlreadyExists = (name) =>
   persons.find((person) => person.name === name);
-
-app.get("/", (request, response) => {
-  response.send("<h1>Phonebook</h1>");
-});
 
 app.get("/api/persons", (request, response) => {
   Person.find({}).then(result => {
