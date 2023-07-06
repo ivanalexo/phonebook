@@ -1,7 +1,24 @@
 const express = require("express");
 const cors = require('cors');
 const morgan = require('morgan');
+
+require('dotenv').config()
+
 const Person = require('./models/phonebook');
+
+const errorHandler = (error, request, response, next) => {
+  console.error(error.message)
+
+  if (error.name === 'CastError') {
+    return response.status(400).send({ error: 'malformatted id' })
+  }
+
+  next(error)
+}
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
 
 const app = express();
 
@@ -49,59 +66,70 @@ const generateId = (length = 6) => {
 };
 
 const checkIfNameAlreadyExists = (name) =>
-  persons.find((person) => person.name === name);
+  Person.find({ name: name }).then(result => result)
 
-app.get("/api/persons", (request, response) => {
+app.get("/api/persons", (request, response, next) => {
   Person.find({}).then(result => {
     response.json(result)
-  })
+  }).catch(error => next(error))
 });
 
-app.get("/api/persons/:id", (request, response) => {
+app.get("/api/persons/:id", (request, response, next) => {
   const id = request.params.id;
   Person.findById(id).then(result => {
     response.json(result)
-  })
+  }).catch(error => next(error))
   // const person = persons.find((person) => person.id === id);
   // response.json(person);
 });
 
-app.delete("/api/persons/:id", (request, response) => {
+app.delete("/api/persons/:id", (request, response, next) => {
   const id = request.params.id;
   Person.findByIdAndDelete(id).then(result => {
     response.status(204).end()
-  })
+  }).catch(error => next(error))
   // persons = persons.filter((person) => person.id !== id);
   // response.status(204).end();
 });
 
-app.post("/api/persons", (request, response) => {
+app.post("/api/persons", (request, response, next) => {
   const body = request.body;
 
   if (!body.name || !body.number) {
     return response.status(400).json({ error: "name or number is missing" });
   }
 
-  // if (checkIfNameAlreadyExists(body.name)) {
-  //   return response.status(400).json({ error: "name already exists in phonebook"});
-  // }
-  const person = new Person({
-    name: body.name,
-    number: body.number,
-  });
-  person.save().then(result => {
-    response.json(result)
-  })
+  Person.findOne({ name: body.name })
+    .then(result => {
+      if (result?.name) {
+        const person = {
+          name: result.name,
+          number: body.number
+        }
+        Person.findByIdAndUpdate(result.id, person, { new: true }).then(updatedPerson => {
+          response.json(updatedPerson)
+        }).catch(error => next(error))
+      } else {
+        const person = new Person({
+          name: body.name,
+          number: body.number,
+        });
+        person.save().then(result => {
+          response.json(result)
+        })
+      }
+    }).catch(error => next(error))
+
 });
 
-app.get("/api/info", (request, response) => {
-  const total = persons.reduce((counter, obj) => {
-    counter += 1;
-    return counter;
-  }, 0);
+app.get("/api/info", async (request, response) => {
+  const total = await Person.countDocuments({})
   response.send(`<p>Phonebook has info for ${total} people</p>
     <p>${new Date()}</p>`);
 });
+
+app.use(unknownEndpoint)
+app.use(errorHandler)
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
