@@ -1,12 +1,10 @@
 const express = require("express");
 const morgan = require('morgan');
-const cors = require('cors');
+const Person = require('./models/phonebook');
 
 const app = express();
 
 app.use(express.json());
-app.use(cors())
-app.use(express.static('build'))
 
 morgan.token('body', function(req, res) {
   return req.method === 'POST' ? JSON.stringify(req.body) : ''
@@ -50,20 +48,32 @@ const generateId = (length = 6) => {
 const checkIfNameAlreadyExists = (name) =>
   persons.find((person) => person.name === name);
 
+app.get("/", (request, response) => {
+  response.send("<h1>Phonebook</h1>");
+});
+
 app.get("/api/persons", (request, response) => {
-  response.json(persons);
+  Person.find({}).then(result => {
+    response.json(result)
+  })
 });
 
 app.get("/api/persons/:id", (request, response) => {
   const id = Number(request.params.id);
-  const person = persons.find((person) => person.id === id);
-  response.json(person);
+  Person.findById(id).then(result => {
+    response.json(result)
+  })
+  // const person = persons.find((person) => person.id === id);
+  // response.json(person);
 });
 
 app.delete("/api/persons/:id", (request, response) => {
   const id = Number(request.params.id);
-  persons = persons.filter((person) => person.id !== id);
-  response.status(204).end();
+  Person.findByIdAndDelete(id).then(result => {
+    response.status(204).end()
+  })
+  // persons = persons.filter((person) => person.id !== id);
+  // response.status(204).end();
 });
 
 app.post("/api/persons", (request, response) => {
@@ -73,17 +83,16 @@ app.post("/api/persons", (request, response) => {
     return response.status(400).json({ error: "name or number is missing" });
   }
 
-  if (checkIfNameAlreadyExists(body.name)) {
-    return response.status(400).json({ error: "name already exists in phonebook"});
-  }
-  const person = {
+  // if (checkIfNameAlreadyExists(body.name)) {
+  //   return response.status(400).json({ error: "name already exists in phonebook"});
+  // }
+  const person = new Person({
     name: body.name,
     number: body.number,
-    id: Number(generateId(10)),
-  };
-
-  persons = persons.concat(person);
-  response.json(person);
+  });
+  person.save().then(result => {
+    response.json(result)
+  })
 });
 
 app.get("/api/info", (request, response) => {
