@@ -59,7 +59,7 @@ app.get("/api/persons", (request, response) => {
 });
 
 app.get("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
+  const id = request.params.id;
   Person.findById(id).then(result => {
     response.json(result)
   })
@@ -68,7 +68,7 @@ app.get("/api/persons/:id", (request, response) => {
 });
 
 app.delete("/api/persons/:id", (request, response) => {
-  const id = Number(request.params.id);
+  const id = request.params.id;
   Person.findByIdAndDelete(id).then(result => {
     response.status(204).end()
   })
