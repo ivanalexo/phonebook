@@ -8,9 +8,14 @@ const Person = require('./models/phonebook');
 
 const errorHandler = (error, request, response, next) => {
   console.error(error.message)
+  console.log('ERROR: ', error)
 
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
+  } else if ( error.name === 'MongooseError') {
+    return response.status(500).json({ error: error.message })
   }
 
   next(error)
@@ -128,7 +133,7 @@ app.post("/api/persons", (request, response, next) => {
         });
         person.save().then(result => {
           response.json(result)
-        })
+        }).catch(error => next(error))
       }
     }).catch(error => next(error))
 
