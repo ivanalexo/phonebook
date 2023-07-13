@@ -31,47 +31,22 @@ app.use(express.json());
 app.use(cors())
 app.use(express.static('build'))
 
-morgan.token('body', function(req, res) {
+morgan.token('body', function(req) {
   return req.method === 'POST' ? JSON.stringify(req.body) : ''
 })
 app.use(morgan(':method :url :status :req[Content-Length] :response-time ms :body'))
 
 const PORT = process.env.PORT || 3001;
-let persons = [
-  {
-    id: 1,
-    name: "Arto Hellas",
-    number: "040-123456",
-  },
-  {
-    id: 2,
-    name: "Ada Lovelace",
-    number: "39-44-5323523",
-  },
-  {
-    id: 3,
-    name: "Dan Abramov",
-    number: "12-43-234345",
-  },
-  {
-    id: 4,
-    name: "Mary Poppendieck",
-    number: "39-23-6423122",
-  },
-];
 
-const generateId = (length = 6) => {
-  let id = "";
-  const characters = "0123456789";
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * characters.length);
-    id += characters.charAt(randomIndex);
-  }
-  return id;
-};
-
-const checkIfNameAlreadyExists = (name) =>
-  Person.find({ name: name }).then(result => result)
+// const generateId = (length = 6) => {
+//   let id = "";
+//   const characters = "0123456789";
+//   for (let i = 0; i < length; i++) {
+//     const randomIndex = Math.floor(Math.random() * characters.length);
+//     id += characters.charAt(randomIndex);
+//   }
+//   return id;
+// };
 
 app.get("/api/persons", (request, response, next) => {
   Person.find({}).then(result => {
@@ -88,7 +63,7 @@ app.get("/api/persons/:id", (request, response, next) => {
   // response.json(person);
 });
 
-app.put("/api/persons/:id", (request, response, next) => {
+app.put("/api/persons/:id", (request, response) => {
   const id = request.params.id;
   const body = request.body
   const updatePerson = {
@@ -106,7 +81,7 @@ app.put("/api/persons/:id", (request, response, next) => {
 
 app.delete("/api/persons/:id", (request, response, next) => {
   const id = request.params.id;
-  Person.findByIdAndDelete(id).then(result => {
+  Person.findByIdAndDelete(id).then(() => {
     response.status(204).end()
   }).catch(error => next(error))
   // persons = persons.filter((person) => person.id !== id);
@@ -139,7 +114,8 @@ app.post("/api/persons", (request, response, next) => {
           name: body.name,
           number: body.number,
         });
-        const error = person.validateSync()
+        
+        person.validateSync()
         person.save().then(result => {
           response.json(result)
         }).catch(error => next(error))

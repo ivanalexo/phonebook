@@ -1,12 +1,13 @@
 const mongoose = require('mongoose')
 
+// eslint-disable-next-line no-unused-vars
 const password = process.argv[2]
 const url = process.env.MONGODB_URI
 
 mongoose.set('strictQuery', false)
 console.log('Connecting to: ', url)
 mongoose.connect(url)
-    .then(result => {
+    .then(() => {
         console.log('Connected to MongoDB')
     })
     .catch(error => {
