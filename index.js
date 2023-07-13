@@ -95,6 +95,10 @@ app.put("/api/persons/:id", (request, response, next) => {
     name: body.name,
     number: body.number
   }
+  const err = Person.schema.path('number').options.validate.validator(body.number)
+  if (!err) {
+    return response.status(401).json({ error: 'number is invalid'})
+  }
   Person.findByIdAndUpdate(id, updatePerson, { new: true }).then(result => {
     response.json(result)
   })
@@ -123,6 +127,10 @@ app.post("/api/persons", (request, response, next) => {
           name: result.name,
           number: body.number
         }
+        const err = Person.schema.path('number').options.validate.validator(body.number)
+        if (!err) {
+          return response.status(401).json({ error: 'number is invalid'})
+        }
         Person.findByIdAndUpdate(result.id, person, { new: true }).then(updatedPerson => {
           response.json(updatedPerson)
         }).catch(error => next(error))
@@ -131,6 +139,7 @@ app.post("/api/persons", (request, response, next) => {
           name: body.name,
           number: body.number,
         });
+        const error = person.validateSync()
         person.save().then(result => {
           response.json(result)
         }).catch(error => next(error))
